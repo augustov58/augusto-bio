@@ -110,7 +110,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       filter: {
         property: "Status",
         select: {
-          equals: "Published",
+          equals: "published",
         },
       },
       sorts: [
