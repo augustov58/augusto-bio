@@ -34,12 +34,11 @@ function getMobileAdjustedWindow(win: Omit<WindowState, 'zIndex'>) {
   const vw = globalThis.innerWidth;
   const vh = globalThis.innerHeight;
   if (vw >= 768) return win;
-  // On mobile: fit windows to ~90% of viewport, centered
-  const w = Math.min(win.size.w, vw - 20);
-  const h = Math.min(win.size.h, vh - 80);
-  const x = Math.max(10, (vw - w) / 2);
-  const y = 45;
-  return { ...win, position: { x, y }, size: { w, h } };
+  // On mobile: full width, positioned below icon row (menu 36px + icons ~56px)
+  const topOffset = 95;
+  const w = vw;
+  const h = vh - topOffset;
+  return { ...win, position: { x: 0, y: topOffset }, size: { w, h } };
 }
 
 const defaultWindows: Omit<WindowState, 'zIndex'>[] = [

@@ -119,8 +119,8 @@ export default function Desktop() {
         </div>
       ))}
 
-      {/* Mobile icon grid */}
-      <div className="grid md:hidden grid-cols-4 gap-1 px-3 py-2 z-10 relative mt-9">
+      {/* Mobile icon row — single row, icons only (no labels) */}
+      <div className="flex md:hidden justify-center gap-3 px-3 py-2 z-10 relative mt-9">
         {[...desktopIcons, ...desktopIconsRight.map(i => ({ ...i, position: { x: 0, y: 0 } }))].map((icon) => (
           <DesktopIcon
             key={icon.id}
@@ -134,6 +134,7 @@ export default function Desktop() {
                 openWindow(icon.id);
               }
             }}
+            compact
           />
         ))}
       </div>
