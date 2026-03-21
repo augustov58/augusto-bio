@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWindowStore, WindowState } from '@/stores/windowStore';
 
@@ -31,7 +31,7 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
   // Manual drag implementation for reliability
   const handleTitleBarMouseDown = useCallback((e: React.MouseEvent) => {
-    if (win.isMaximized) return;
+    if (win.isMaximized || isMobile) return;
     e.preventDefault();
     isDragging.current = true;
     dragStart.current = {
@@ -49,6 +49,7 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
       const rawX = dragStart.current.winX + dx;
       const rawY = dragStart.current.winY + dy;
       
+      // Constrain: don't let title bar go above menu bar or off screen
       const newY = Math.max(MENU_BAR_HEIGHT, rawY);
       const newX = Math.min(globalThis.innerWidth - 100, Math.max(-win.size.w + 100, rawX));
       
@@ -63,11 +64,11 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [win.id, win.position.x, win.position.y, win.size.w, win.isMaximized, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, win.size.w, win.isMaximized, isMobile, bringToFront, updatePosition]);
 
   // Touch drag for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (win.isMaximized) return;
+    if (win.isMaximized || isMobile) return;
     const touch = e.touches[0];
     isDragging.current = true;
     dragStart.current = {
@@ -80,7 +81,6 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDragging.current) return;
-      e.preventDefault();
       const touch = e.touches[0];
       const dx = touch.clientX - dragStart.current.x;
       const dy = touch.clientY - dragStart.current.y;
@@ -97,21 +97,11 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [win.id, win.position.x, win.position.y, win.isMaximized, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, win.isMaximized, isMobile, bringToFront, updatePosition]);
 
   if (!win.isOpen || win.isMinimized) return null;
 
-  const isMaximized = win.isMaximized;
-
-  // On mobile: force full-width below icon row
-  const mobileStyle = isMobile ? {
-    zIndex: win.zIndex,
-    left: 0,
-    top: 95,
-    width: '100vw',
-    height: 'calc(100vh - 95px)',
-    borderRadius: 0,
-  } : undefined;
+  const isMaximized = win.isMaximized || isMobile;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
@@ -121,18 +111,16 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
         isMaximized ? 'inset-0' : ''
       } ${isTopWindow ? 'window-shadow-active' : 'window-shadow'}`}
       style={
-        mobileStyle
-          ? mobileStyle
-          : isMaximized
-            ? { zIndex: win.zIndex, top: MENU_BAR_HEIGHT, borderRadius: 0 }
-            : {
-                zIndex: win.zIndex,
-                left: win.position.x,
-                top: win.position.y,
-                width: win.size.w,
-                height: win.size.h,
-                borderRadius: 8,
-              }
+        isMaximized
+          ? { zIndex: win.zIndex, top: MENU_BAR_HEIGHT, borderRadius: 0 }
+          : {
+              zIndex: win.zIndex,
+              left: win.position.x,
+              top: win.position.y,
+              width: win.size.w,
+              height: win.size.h,
+              borderRadius: 8,
+            }
       }
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

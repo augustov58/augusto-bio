@@ -126,7 +126,6 @@ export default function Desktop() {
             key={icon.id}
             icon={icon.icon}
             label={icon.label}
-            compact
             onClick={() => {
               const href = 'href' in icon ? (icon as { href?: string }).href : undefined;
               if (href) {

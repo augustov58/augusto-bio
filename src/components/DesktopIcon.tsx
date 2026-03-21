@@ -9,10 +9,9 @@ interface DesktopIconProps {
   onClick: () => void;
   href?: string;
   initialPosition?: { x: number; y: number };
-  compact?: boolean;
 }
 
-export default function DesktopIcon({ icon, label, onClick, href, initialPosition, compact }: DesktopIconProps) {
+export default function DesktopIcon({ icon, label, onClick, href, initialPosition }: DesktopIconProps) {
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
   const [selected, setSelected] = useState(false);
   const isDragging = useRef(false);
@@ -81,22 +80,6 @@ export default function DesktopIcon({ icon, label, onClick, href, initialPositio
     top: position.y,
     zIndex: isDragging.current ? 1000 : 5,
   } : {};
-
-  if (compact) {
-    return (
-      <motion.div
-        className="desktop-icon flex flex-col items-center gap-0 p-1 rounded-lg cursor-pointer select-none"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={handleClick}
-        tabIndex={0}
-      >
-        <div className="icon-glow w-10 h-10 flex items-center justify-center rounded-lg transition-all">
-          <span className="text-2xl drop-shadow-md">{icon}</span>
-        </div>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div
