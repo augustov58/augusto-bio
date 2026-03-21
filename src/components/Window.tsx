@@ -25,13 +25,16 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
     return () => globalThis.removeEventListener('resize', check);
   }, []);
 
+  // On mobile: default to centered, double-tap toggles to fullscreen
+  const isMaximized = isMobile ? win.isMaximized : win.isMaximized;
+
   const handlePointerDown = useCallback(() => {
     bringToFront(win.id);
   }, [bringToFront, win.id]);
 
   // Manual drag implementation for reliability
   const handleTitleBarMouseDown = useCallback((e: React.MouseEvent) => {
-    if (win.isMaximized || isMobile) return;
+    if (isMaximized) return;
     e.preventDefault();
     isDragging.current = true;
     dragStart.current = {
@@ -64,11 +67,11 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [win.id, win.position.x, win.position.y, win.size.w, win.isMaximized, isMobile, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, win.size.w, isMaximized, bringToFront, updatePosition]);
 
   // Touch drag for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (win.isMaximized || isMobile) return;
+    if (isMaximized) return;
     const touch = e.touches[0];
     isDragging.current = true;
     dragStart.current = {
@@ -97,12 +100,10 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [win.id, win.position.x, win.position.y, win.isMaximized, isMobile, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, isMaximized, bringToFront, updatePosition]);
 
   if (!win.isOpen || win.isMinimized) return null;
 
-  // On mobile: default to centered, double-tap toggles to fullscreen
-  const isMaximized = isMobile ? win.isMaximized : win.isMaximized;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
