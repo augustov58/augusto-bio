@@ -14,7 +14,7 @@ export default function ProjectsContent() {
       </div>
 
       {/* Icon grid view like Finder */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {projects.map((project) => (
           <div
             key={project.title}
