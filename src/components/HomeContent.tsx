@@ -90,7 +90,7 @@ export default function HomeContent() {
 
       {/* Status bar */}
       <div className="font-mono text-[10px] text-secondary/60 border-t border-window-border pt-3">
-        <span>$ echo &quot;Based in Kissimmee, FL 🌴 | Venezuelan roots 🇻🇪&quot;</span>
+        <span>$ echo &quot;Based in Central Florida 🌴 | Venezuelan roots 🇻🇪&quot;</span>
       </div>
     </div>
   );

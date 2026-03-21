@@ -10,7 +10,7 @@ export default function AboutContent() {
 
         <p className="text-secondary text-sm leading-relaxed mb-4">
           I&apos;m <strong className="text-primary">Augusto Valbuena</strong> — a PE-licensed electrical engineer
-          based in Kissimmee, Florida. By day, I design electrical systems for commercial and
+          based in Central Florida. By day, I design electrical systems for commercial and
           residential construction projects. By night, I build software.
         </p>
 
