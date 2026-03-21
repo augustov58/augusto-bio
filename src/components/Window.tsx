@@ -101,8 +101,8 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
   if (!win.isOpen || win.isMinimized) return null;
 
-  // On mobile: default to maximized, double-tap toggles it off
-  const isMaximized = isMobile ? !win.isMaximized : win.isMaximized;
+  // On mobile: default to centered, double-tap toggles to fullscreen
+  const isMaximized = isMobile ? win.isMaximized : win.isMaximized;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
