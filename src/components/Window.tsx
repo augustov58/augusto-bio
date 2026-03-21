@@ -101,7 +101,8 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
   if (!win.isOpen || win.isMinimized) return null;
 
-  const isMaximized = win.isMaximized || isMobile;
+  // On mobile: default to maximized, double-tap toggles it off
+  const isMaximized = isMobile ? !win.isMaximized : win.isMaximized;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
@@ -113,14 +114,23 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
       style={
         isMaximized
           ? { zIndex: win.zIndex, top: MENU_BAR_HEIGHT, borderRadius: 0 }
-          : {
-              zIndex: win.zIndex,
-              left: win.position.x,
-              top: win.position.y,
-              width: win.size.w,
-              height: win.size.h,
-              borderRadius: 8,
-            }
+          : isMobile
+            ? {
+                zIndex: win.zIndex,
+                left: '3%',
+                top: 80,
+                width: '94%',
+                height: '70vh',
+                borderRadius: 8,
+              }
+            : {
+                zIndex: win.zIndex,
+                left: win.position.x,
+                top: win.position.y,
+                width: win.size.w,
+                height: win.size.h,
+                borderRadius: 8,
+              }
       }
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
