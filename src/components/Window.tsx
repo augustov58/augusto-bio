@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWindowStore, WindowState } from '@/stores/windowStore';
 
@@ -14,8 +14,16 @@ const MENU_BAR_HEIGHT = 36;
 
 export default function Window({ window: win, children, toolbar }: WindowProps) {
   const { closeWindow, minimizeWindow, maximizeWindow, bringToFront, updatePosition } = useWindowStore();
+  const [isMobile, setIsMobile] = useState(false);
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, winX: 0, winY: 0 });
+
+  useEffect(() => {
+    const check = () => setIsMobile(globalThis.innerWidth < 768);
+    check();
+    globalThis.addEventListener('resize', check);
+    return () => globalThis.removeEventListener('resize', check);
+  }, []);
 
   const handlePointerDown = useCallback(() => {
     bringToFront(win.id);
@@ -94,6 +102,16 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
   if (!win.isOpen || win.isMinimized) return null;
 
   const isMaximized = win.isMaximized;
+
+  // On mobile: force full-width below icon row
+  const mobileStyle = isMobile ? {
+    zIndex: win.zIndex,
+    left: 0,
+    top: 95,
+    width: '100vw',
+    height: 'calc(100vh - 95px)',
+    borderRadius: 0,
+  } : undefined;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
@@ -103,16 +121,18 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
         isMaximized ? 'inset-0' : ''
       } ${isTopWindow ? 'window-shadow-active' : 'window-shadow'}`}
       style={
-        isMaximized
-          ? { zIndex: win.zIndex, top: MENU_BAR_HEIGHT, borderRadius: 0 }
-          : {
-              zIndex: win.zIndex,
-              left: win.position.x,
-              top: win.position.y,
-              width: win.size.w,
-              height: win.size.h,
-              borderRadius: 8,
-            }
+        mobileStyle
+          ? mobileStyle
+          : isMaximized
+            ? { zIndex: win.zIndex, top: MENU_BAR_HEIGHT, borderRadius: 0 }
+            : {
+                zIndex: win.zIndex,
+                left: win.position.x,
+                top: win.position.y,
+                width: win.size.w,
+                height: win.size.h,
+                borderRadius: 8,
+              }
       }
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
