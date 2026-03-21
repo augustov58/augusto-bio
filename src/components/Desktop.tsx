@@ -17,6 +17,7 @@ import WhyMeContent from './WhyMeContent';
 import ResumeContent from './ResumeContent';
 import BlogPostContent from './BlogPostContent';
 import PixelArt from './PixelArt';
+import SunsetBackground from './SunsetBackground';
 
 // Desktop icons with absolute positions (like real desktop icons)
 const desktopIcons = [
@@ -76,30 +77,36 @@ export default function Desktop() {
     ['home', 'about', 'blogpost'].includes(contentType);
 
   return (
-    <div className="desktop-bg fixed inset-0 overflow-hidden">
+    <div className="fixed inset-0" style={{ background: '#4a1a2a' }}>
+      {/* Sunset background */}
+      <SunsetBackground />
+
       {/* Menu bar */}
       <MenuBar />
 
       {/* Desktop icons - left side (absolute positioned, draggable) */}
-      <div className="hidden md:block">
-        {desktopIcons.map((icon) => (
+      {desktopIcons.map((icon) => (
+        <div key={icon.id} className="hidden md:block">
           <DesktopIcon
-            key={icon.id}
             icon={icon.icon}
             label={icon.label}
             initialPosition={icon.position}
             onClick={() => openWindow(icon.id)}
           />
-        ))}
-        {desktopIconsRight.map((icon) => (
+        </div>
+      ))}
+      {desktopIconsRight.map((icon) => (
+        <div
+          key={icon.id}
+          className="hidden md:block absolute"
+          style={{
+            right: icon.posFromRight,
+            top: icon.posY,
+          }}
+        >
           <DesktopIcon
-            key={icon.id}
             icon={icon.icon}
             label={icon.label}
-            initialPosition={{
-              x: typeof globalThis !== 'undefined' && globalThis.innerWidth ? globalThis.innerWidth - icon.posFromRight - 76 : 1200,
-              y: icon.posY,
-            }}
             onClick={() => {
               if (icon.href) {
                 globalThis.open(icon.href, '_blank');
@@ -109,8 +116,8 @@ export default function Desktop() {
             }}
             href={icon.href}
           />
-        ))}
-      </div>
+        </div>
+      ))}
 
       {/* Mobile icon strip */}
       <div className="flex md:hidden overflow-x-auto gap-1 px-3 py-2 z-10 relative mt-9">

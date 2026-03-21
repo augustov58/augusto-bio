@@ -139,29 +139,34 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
         onDoubleClick={() => maximizeWindow(win.id)}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {/* Traffic light buttons */}
-          <div className="flex items-center gap-1.5 mr-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); closeWindow(win.id); }}
-              className="w-3 h-3 rounded-full bg-[#FF5F57] hover:bg-[#FF3B30] transition-colors border border-[#E04038]"
-              title="Close"
-              onMouseDown={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id); }}
-              className="w-3 h-3 rounded-full bg-[#FEBC2E] hover:bg-[#F5A623] transition-colors border border-[#DEA123]"
-              title="Minimize"
-              onMouseDown={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => { e.stopPropagation(); maximizeWindow(win.id); }}
-              className="w-3 h-3 rounded-full bg-[#28C840] hover:bg-[#1AAB29] transition-colors border border-[#1FAD2F]"
-              title="Maximize"
-              onMouseDown={(e) => e.stopPropagation()}
-            />
-          </div>
           <span className="text-base">{win.icon}</span>
           <span className="font-mono text-xs text-primary/80 truncate font-medium">{win.title}</span>
+        </div>
+        <div className="flex items-center gap-0.5 ml-2 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id); }}
+            className="w-7 h-6 flex items-center justify-center text-primary/60 hover:bg-black/10 transition-colors text-xs font-mono"
+            title="Minimize"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            ─
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); maximizeWindow(win.id); }}
+            className="w-7 h-6 flex items-center justify-center text-primary/60 hover:bg-black/10 transition-colors text-xs font-mono"
+            title="Maximize"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            □
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); closeWindow(win.id); }}
+            className="w-7 h-6 flex items-center justify-center text-primary/60 hover:bg-red-500 hover:text-white transition-colors text-xs font-mono rounded-tr-lg"
+            title="Close"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            ✕
+          </button>
         </div>
       </div>
 
