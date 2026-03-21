@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import MobileNav from "@/components/MobileNav";
-import Footer from "@/components/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +22,7 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Augusto Valbuena — Engineer, Builder, Tinkerer",
   description:
-    "Electrical engineer by day, builder by night. Exploring AI, crypto, and everything in between.",
+    "Electrical engineer by day, builder by night. Exploring AI, automation, and everything in between.",
   openGraph: {
     title: "Augusto Valbuena",
     description: "Engineer, Builder, Tinkerer",
@@ -39,18 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en">
       <body
-        className={`${inter.variable} ${jakarta.variable} ${jetbrains.variable} font-sans antialiased bg-cream text-primary`}
+        className={`${inter.variable} ${jakarta.variable} ${jetbrains.variable} font-sans antialiased`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
-            <MobileNav />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </div>
+        {children}
       </body>
     </html>
   );

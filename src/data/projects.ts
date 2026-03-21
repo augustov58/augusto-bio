@@ -9,10 +9,11 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    title: "NEC Pro Compliance",
+    title: "Sparkplan",
     description:
-      "SaaS platform for electrical code compliance powered by AI. Helps EV charging installers navigate NEC requirements faster and with fewer errors.",
+      "AI-powered electrical design platform for code compliance. Streamlines NEC calculations, panel schedules, and EV charging system design.",
     tags: ["Next.js", "Python", "AI", "SaaS"],
+    href: "https://sparkplan.app",
     emoji: "⚡",
     featured: true,
   },
@@ -21,6 +22,7 @@ export const projects: Project[] = [
     description:
       "Real estate portal for the Venezuelan market. Automated scraping pipeline with AI-powered listing enrichment and intelligent search.",
     tags: ["Next.js", "Supabase", "Python", "Scraping"],
+    href: "https://micasavenezuela.com",
     emoji: "🏠",
     featured: true,
   },
