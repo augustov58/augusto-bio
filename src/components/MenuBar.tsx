@@ -49,7 +49,7 @@ export default function MenuBar() {
     {
       label: 'Contact',
       items: [
-        { label: '📧  Contact', href: '#contact' },
+        { label: '📧  Email', href: 'mailto:augustovalbuena@gmail.com' },
         { label: '🐙  GitHub', href: 'https://github.com/augustov58' },
         { label: '💼  LinkedIn', href: 'https://linkedin.com/in/augustovalbuena' },
       ],

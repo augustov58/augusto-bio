@@ -3,10 +3,10 @@
 export default function ContactContent() {
   const contacts = [
     {
-      icon: '💼',
-      label: 'LinkedIn',
-      value: 'augustovalbuena',
-      href: 'https://linkedin.com/in/augustovalbuena',
+      icon: '📧',
+      label: 'Email',
+      value: 'augustovalbuena@gmail.com',
+      href: 'mailto:augustovalbuena@gmail.com',
       description: 'Best way to reach me',
     },
     {
@@ -15,6 +15,13 @@ export default function ContactContent() {
       value: 'augustov58',
       href: 'https://github.com/augustov58',
       description: 'Check out my code',
+    },
+    {
+      icon: '💼',
+      label: 'LinkedIn',
+      value: 'augustovalbuena',
+      href: 'https://linkedin.com/in/augustovalbuena',
+      description: 'Professional network',
     },
   ];
 
@@ -56,7 +63,7 @@ export default function ContactContent() {
       </div>
 
       <div className="font-mono text-[10px] text-secondary/40 mt-6 pt-3 border-t border-window-border">
-        contact.vcf &middot; 2 entries
+        contact.vcf &middot; 3 entries
       </div>
     </div>
   );
