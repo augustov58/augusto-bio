@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useWindowStore, WindowState } from '@/stores/windowStore';
 
@@ -14,16 +14,8 @@ const MENU_BAR_HEIGHT = 36;
 
 export default function Window({ window: win, children, toolbar }: WindowProps) {
   const { closeWindow, minimizeWindow, maximizeWindow, bringToFront, updatePosition } = useWindowStore();
-  const [isMobile, setIsMobile] = useState(false);
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, winX: 0, winY: 0 });
-
-  useEffect(() => {
-    const check = () => setIsMobile(globalThis.innerWidth < 768);
-    check();
-    globalThis.addEventListener('resize', check);
-    return () => globalThis.removeEventListener('resize', check);
-  }, []);
 
   const handlePointerDown = useCallback(() => {
     bringToFront(win.id);
@@ -31,7 +23,7 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
   // Manual drag implementation for reliability
   const handleTitleBarMouseDown = useCallback((e: React.MouseEvent) => {
-    if (win.isMaximized || isMobile) return;
+    if (win.isMaximized) return;
     e.preventDefault();
     isDragging.current = true;
     dragStart.current = {
@@ -49,7 +41,6 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
       const rawX = dragStart.current.winX + dx;
       const rawY = dragStart.current.winY + dy;
       
-      // Constrain: don't let title bar go above menu bar or off screen
       const newY = Math.max(MENU_BAR_HEIGHT, rawY);
       const newX = Math.min(globalThis.innerWidth - 100, Math.max(-win.size.w + 100, rawX));
       
@@ -64,11 +55,11 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [win.id, win.position.x, win.position.y, win.size.w, win.isMaximized, isMobile, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, win.size.w, win.isMaximized, bringToFront, updatePosition]);
 
   // Touch drag for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (win.isMaximized || isMobile) return;
+    if (win.isMaximized) return;
     const touch = e.touches[0];
     isDragging.current = true;
     dragStart.current = {
@@ -81,6 +72,7 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDragging.current) return;
+      e.preventDefault();
       const touch = e.touches[0];
       const dx = touch.clientX - dragStart.current.x;
       const dy = touch.clientY - dragStart.current.y;
@@ -97,11 +89,11 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
 
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [win.id, win.position.x, win.position.y, win.isMaximized, isMobile, bringToFront, updatePosition]);
+  }, [win.id, win.position.x, win.position.y, win.isMaximized, bringToFront, updatePosition]);
 
   if (!win.isOpen || win.isMinimized) return null;
 
-  const isMaximized = win.isMaximized || isMobile;
+  const isMaximized = win.isMaximized;
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 

@@ -119,8 +119,8 @@ export default function Desktop() {
         </div>
       ))}
 
-      {/* Mobile icon strip */}
-      <div className="flex md:hidden overflow-x-auto gap-1 px-3 py-2 z-10 relative mt-9">
+      {/* Mobile icon grid */}
+      <div className="grid md:hidden grid-cols-4 gap-1 px-3 py-2 z-10 relative mt-9">
         {[...desktopIcons, ...desktopIconsRight.map(i => ({ ...i, position: { x: 0, y: 0 } }))].map((icon) => (
           <DesktopIcon
             key={icon.id}

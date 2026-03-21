@@ -29,6 +29,19 @@ interface WindowStore {
 
 const CASCADE_OFFSET = 30;
 
+function getMobileAdjustedWindow(win: Omit<WindowState, 'zIndex'>) {
+  if (typeof globalThis === 'undefined' || !globalThis.innerWidth) return win;
+  const vw = globalThis.innerWidth;
+  const vh = globalThis.innerHeight;
+  if (vw >= 768) return win;
+  // On mobile: fit windows to ~90% of viewport, centered
+  const w = Math.min(win.size.w, vw - 20);
+  const h = Math.min(win.size.h, vh - 80);
+  const x = Math.max(10, (vw - w) / 2);
+  const y = 45;
+  return { ...win, position: { x, y }, size: { w, h } };
+}
+
 const defaultWindows: Omit<WindowState, 'zIndex'>[] = [
   {
     id: 'home',
@@ -124,7 +137,7 @@ const defaultWindows: Omit<WindowState, 'zIndex'>[] = [
 let cascadeCounter = 0;
 
 export const useWindowStore = create<WindowStore>((set, get) => ({
-  windows: defaultWindows.map((w, i) => ({ ...w, zIndex: i === 0 ? 10 : 1 })),
+  windows: defaultWindows.map((w, i) => ({ ...getMobileAdjustedWindow(w), zIndex: i === 0 ? 10 : 1 })),
   nextZIndex: 11,
 
   openWindow: (id: string, meta?: Record<string, string>) => {
@@ -144,7 +157,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       // Dynamic window (e.g., blog post)
       cascadeCounter++;
       const offset = (cascadeCounter % 8) * CASCADE_OFFSET;
-      const newWindow: WindowState = {
+      const rawWindow = {
         id,
         title: meta?.title || id,
         icon: meta?.icon || '📄',
@@ -153,9 +166,12 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
         isMaximized: false,
         position: { x: 180 + offset, y: 70 + offset },
         size: { w: 680, h: 500 },
-        zIndex: nextZIndex,
         contentType: meta?.contentType || 'blogpost',
         meta,
+      };
+      const newWindow: WindowState = {
+        ...getMobileAdjustedWindow(rawWindow),
+        zIndex: nextZIndex,
       };
       set({
         windows: [...windows, newWindow],
