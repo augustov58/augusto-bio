@@ -18,6 +18,7 @@ import ResumeContent from './ResumeContent';
 import BlogPostContent from './BlogPostContent';
 import PixelArt from './PixelArt';
 import SunsetBackground from './SunsetBackground';
+import { useHashRouting } from '@/hooks/useHashRouting';
 
 // Desktop icons with absolute positions (like real desktop icons)
 const desktopIcons = [
@@ -63,6 +64,9 @@ function WindowContentRenderer({ contentType, meta }: { contentType: string; met
 
 export default function Desktop() {
   const { windows, openWindow, closeActiveWindow } = useWindowStore();
+
+  // Hash-based routing (sync URL ↔ windows)
+  useHashRouting();
 
   // Escape key closes active window
   useEffect(() => {
