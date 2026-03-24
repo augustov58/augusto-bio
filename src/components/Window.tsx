@@ -16,24 +16,21 @@ const MIN_HEIGHT = 200;
 
 type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-const edgeCursors: Record<ResizeEdge, string> = {
-  n: 'cursor-n-resize',
-  s: 'cursor-s-resize',
-  e: 'cursor-e-resize',
-  w: 'cursor-w-resize',
-  ne: 'cursor-ne-resize',
-  nw: 'cursor-nw-resize',
-  se: 'cursor-se-resize',
-  sw: 'cursor-sw-resize',
+const CURSOR_MAP: Record<ResizeEdge, string> = {
+  n: 'ns-resize', s: 'ns-resize',
+  e: 'ew-resize', w: 'ew-resize',
+  ne: 'nesw-resize', sw: 'nesw-resize',
+  nw: 'nwse-resize', se: 'nwse-resize',
 };
 
 export default function Window({ window: win, children, toolbar }: WindowProps) {
   const { closeWindow, minimizeWindow, maximizeWindow, bringToFront, updatePosition, updateSize } = useWindowStore();
   const [isMobile, setIsMobile] = useState(false);
   const isDragging = useRef(false);
-  const isResizing = useRef<ResizeEdge | null>(null);
   const dragStart = useRef({ x: 0, y: 0, winX: 0, winY: 0, winW: 0, winH: 0 });
   const mobileDragInitialized = useRef(false);
+  const winIdRef = useRef(win.id);
+  winIdRef.current = win.id;
 
   useEffect(() => {
     const check = () => setIsMobile(globalThis.innerWidth < 768);
@@ -42,7 +39,7 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
     return () => globalThis.removeEventListener('resize', check);
   }, []);
 
-  // On mobile first open, center the window if it hasn't been dragged yet
+  // On mobile first open, center the window
   useEffect(() => {
     if (isMobile && win.isOpen && !mobileDragInitialized.current) {
       mobileDragInitialized.current = true;
@@ -61,105 +58,32 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
     bringToFront(win.id);
   }, [bringToFront, win.id]);
 
-  // ─── Drag (mouse) ───
-  const handleTitleBarMouseDown = useCallback((e: React.MouseEvent) => {
-    if (isMaximized) return;
-    e.preventDefault();
+  // ─── Drag via title bar ───
+  const startDrag = useCallback((clientX: number, clientY: number) => {
+    if (win.isMaximized) return;
     isDragging.current = true;
-    dragStart.current = {
-      x: e.clientX, y: e.clientY,
-      winX: win.position.x, winY: win.position.y,
-      winW: win.size.w, winH: win.size.h,
-    };
-    bringToFront(win.id);
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const dx = e.clientX - dragStart.current.x;
-      const dy = e.clientY - dragStart.current.y;
-      const newY = Math.max(MENU_BAR_HEIGHT, dragStart.current.winY + dy);
-      const newX = Math.min(globalThis.innerWidth - 100, Math.max(-win.size.w + 100, dragStart.current.winX + dx));
-      updatePosition(win.id, newX, newY);
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [win.id, win.position.x, win.position.y, win.size.w, isMaximized, bringToFront, updatePosition]);
-
-  // ─── Drag (touch) ───
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (isMaximized) return;
-    const touch = e.touches[0];
-    isDragging.current = true;
-    dragStart.current = {
-      x: touch.clientX, y: touch.clientY,
-      winX: win.position.x, winY: win.position.y,
-      winW: win.size.w, winH: win.size.h,
-    };
-    bringToFront(win.id);
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current) return;
-      e.preventDefault(); // prevent scroll while dragging
-      const touch = e.touches[0];
-      const dx = touch.clientX - dragStart.current.x;
-      const dy = touch.clientY - dragStart.current.y;
-      const newX = dragStart.current.winX + dx;
-      const newY = Math.max(MENU_BAR_HEIGHT, dragStart.current.winY + dy);
-      updatePosition(win.id, newX, newY);
-    };
-
-    const handleTouchEnd = () => {
-      isDragging.current = false;
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [win.id, win.position.x, win.position.y, isMaximized, bringToFront, updatePosition]);
-
-  // ─── Resize (mouse + touch) ───
-  const startResize = useCallback((edge: ResizeEdge, clientX: number, clientY: number) => {
-    if (isMaximized) return;
-    isResizing.current = edge;
+    const state = useWindowStore.getState().windows.find(w => w.id === win.id);
+    if (!state) return;
     dragStart.current = {
       x: clientX, y: clientY,
-      winX: win.position.x, winY: win.position.y,
-      winW: win.size.w, winH: win.size.h,
+      winX: state.position.x, winY: state.position.y,
+      winW: state.size.w, winH: state.size.h,
     };
     bringToFront(win.id);
 
-    const doResize = (cx: number, cy: number) => {
-      if (!isResizing.current) return;
+    const onMove = (cx: number, cy: number) => {
+      if (!isDragging.current) return;
       const dx = cx - dragStart.current.x;
       const dy = cy - dragStart.current.y;
-      const { winX, winY, winW, winH } = dragStart.current;
-      let newX = winX, newY = winY, newW = winW, newH = winH;
-
-      const e = isResizing.current;
-      if (e.includes('e')) newW = Math.max(MIN_WIDTH, winW + dx);
-      if (e.includes('w')) { newW = Math.max(MIN_WIDTH, winW - dx); newX = winX + winW - newW; }
-      if (e.includes('s')) newH = Math.max(MIN_HEIGHT, winH + dy);
-      if (e.includes('n')) { newH = Math.max(MIN_HEIGHT, winH - dy); newY = Math.max(MENU_BAR_HEIGHT, winY + winH - newH); }
-
-      updatePosition(win.id, newX, newY);
-      updateSize(win.id, newW, newH);
+      const newY = Math.max(MENU_BAR_HEIGHT, dragStart.current.winY + dy);
+      const newX = Math.min(globalThis.innerWidth - 100, Math.max(-dragStart.current.winW + 100, dragStart.current.winX + dx));
+      updatePosition(winIdRef.current, newX, newY);
     };
 
-    const onMouseMove = (e: MouseEvent) => { e.preventDefault(); doResize(e.clientX, e.clientY); };
-    const onTouchMove = (e: TouchEvent) => { e.preventDefault(); doResize(e.touches[0].clientX, e.touches[0].clientY); };
-
+    const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); };
     const cleanup = () => {
-      isResizing.current = null;
+      isDragging.current = false;
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', cleanup);
       document.removeEventListener('touchmove', onTouchMove);
@@ -170,54 +94,93 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
     document.addEventListener('mouseup', cleanup);
     document.addEventListener('touchmove', onTouchMove, { passive: false });
     document.addEventListener('touchend', cleanup);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [win.id, win.position.x, win.position.y, win.size.w, win.size.h, isMaximized, bringToFront, updatePosition, updateSize]);
+  }, [win.id, win.isMaximized, bringToFront, updatePosition]);
+
+  // ─── Resize from edges/corners ───
+  const startResize = useCallback((edge: ResizeEdge, clientX: number, clientY: number) => {
+    if (win.isMaximized) return;
+    // Read latest from store, not from stale props
+    const state = useWindowStore.getState().windows.find(w => w.id === win.id);
+    if (!state) return;
+
+    const startX = clientX;
+    const startY = clientY;
+    const origX = state.position.x;
+    const origY = state.position.y;
+    const origW = state.size.w;
+    const origH = state.size.h;
+
+    // Set cursor on body during resize
+    const prevCursor = document.body.style.cursor;
+    document.body.style.cursor = CURSOR_MAP[edge];
+    // Prevent text selection during resize
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+
+    const doResize = (cx: number, cy: number) => {
+      const dx = cx - startX;
+      const dy = cy - startY;
+      let newX = origX, newY = origY, newW = origW, newH = origH;
+
+      if (edge.includes('e')) newW = Math.max(MIN_WIDTH, origW + dx);
+      if (edge.includes('w')) { newW = Math.max(MIN_WIDTH, origW - dx); newX = origX + origW - newW; }
+      if (edge.includes('s')) newH = Math.max(MIN_HEIGHT, origH + dy);
+      if (edge.includes('n')) { newH = Math.max(MIN_HEIGHT, origH - dy); newY = Math.max(MENU_BAR_HEIGHT, origY + origH - newH); }
+
+      updatePosition(winIdRef.current, newX, newY);
+      updateSize(winIdRef.current, newW, newH);
+    };
+
+    const onMouseMove = (e: MouseEvent) => { e.preventDefault(); doResize(e.clientX, e.clientY); };
+    const onTouchMove = (e: TouchEvent) => { e.preventDefault(); doResize(e.touches[0].clientX, e.touches[0].clientY); };
+    const cleanup = () => {
+      document.body.style.cursor = prevCursor;
+      document.body.style.userSelect = prevUserSelect;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', cleanup);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', cleanup);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', cleanup);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', cleanup);
+  }, [win.id, win.isMaximized, updatePosition, updateSize]);
 
   if (!win.isOpen || win.isMinimized) return null;
 
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
-  // Resize handle component — uses generous hit areas fully inside the window
-  const EDGE_THICKNESS = 8; // px inset from each edge
-  const CORNER_SIZE = 16;   // px square at each corner
+  // Build resize handle styles
+  const EDGE = 6;
+  const CORNER = 14;
 
-  const ResizeHandle = ({ edge }: { edge: ResizeEdge }) => {
+  const handleStyle = (edge: ResizeEdge): React.CSSProperties => {
+    const s: React.CSSProperties = {
+      position: 'absolute',
+      zIndex: 50,
+      cursor: CURSOR_MAP[edge],
+    };
     const isCorner = edge.length === 2;
-    const style: React.CSSProperties = { position: 'absolute', zIndex: 50 };
-
     if (isCorner) {
-      style.width = CORNER_SIZE;
-      style.height = CORNER_SIZE;
-      if (edge.includes('n')) style.top = 0;
-      if (edge.includes('s')) style.bottom = 0;
-      if (edge.includes('w')) style.left = 0;
-      if (edge.includes('e')) style.right = 0;
+      s.width = CORNER; s.height = CORNER;
+      if (edge.includes('n')) s.top = 0;
+      if (edge.includes('s')) s.bottom = 0;
+      if (edge.includes('w')) s.left = 0;
+      if (edge.includes('e')) s.right = 0;
+    } else if (edge === 'n' || edge === 's') {
+      s.left = CORNER; s.right = CORNER; s.height = EDGE;
+      if (edge === 'n') s.top = 0; else s.bottom = 0;
     } else {
-      // Edge handles: full length minus corners
-      if (edge === 'n' || edge === 's') {
-        style.left = CORNER_SIZE;
-        style.right = CORNER_SIZE;
-        style.height = EDGE_THICKNESS;
-        if (edge === 'n') style.top = 0; else style.bottom = 0;
-      }
-      if (edge === 'e' || edge === 'w') {
-        style.top = CORNER_SIZE;
-        style.bottom = CORNER_SIZE;
-        style.width = EDGE_THICKNESS;
-        if (edge === 'w') style.left = 0; else style.right = 0;
-      }
+      s.top = CORNER; s.bottom = CORNER; s.width = EDGE;
+      if (edge === 'w') s.left = 0; else s.right = 0;
     }
-
-    return (
-      <div
-        className={`${edgeCursors[edge]}`}
-        style={style}
-        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startResize(edge, e.clientX, e.clientY); }}
-        onTouchStart={(e) => { e.stopPropagation(); startResize(edge, e.touches[0].clientX, e.touches[0].clientY); }}
-      />
-    );
+    return s;
   };
+
+  const edges: ResizeEdge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
   return (
     <motion.div
@@ -242,19 +205,15 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
       transition={{ duration: 0.18, ease: 'easeOut' }}
       onPointerDown={handlePointerDown}
     >
-      {/* Resize handles (hidden when maximized) */}
-      {!isMaximized && (
-        <>
-          <ResizeHandle edge="n" />
-          <ResizeHandle edge="s" />
-          <ResizeHandle edge="e" />
-          <ResizeHandle edge="w" />
-          <ResizeHandle edge="ne" />
-          <ResizeHandle edge="nw" />
-          <ResizeHandle edge="se" />
-          <ResizeHandle edge="sw" />
-        </>
-      )}
+      {/* Resize handles */}
+      {!isMaximized && edges.map((edge) => (
+        <div
+          key={edge}
+          style={handleStyle(edge)}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startResize(edge, e.clientX, e.clientY); }}
+          onTouchStart={(e) => { e.stopPropagation(); startResize(edge, e.touches[0].clientX, e.touches[0].clientY); }}
+        />
+      ))}
 
       {/* Title bar */}
       <div
@@ -262,8 +221,8 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
           isMaximized ? '' : 'rounded-t-lg'
         } ${isMaximized ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
         style={{ background: isTopWindow ? '#C8C2B4' : '#DDD8CE', touchAction: 'none' }}
-        onMouseDown={handleTitleBarMouseDown}
-        onTouchStart={handleTouchStart}
+        onMouseDown={(e) => { e.preventDefault(); startDrag(e.clientX, e.clientY); }}
+        onTouchStart={(e) => startDrag(e.touches[0].clientX, e.touches[0].clientY)}
         onDoubleClick={() => maximizeWindow(win.id)}
       >
         <div className="flex items-center gap-2 min-w-0">
