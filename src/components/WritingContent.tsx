@@ -27,7 +27,7 @@ export default function WritingContent() {
   }, []);
 
   return (
-    <div className="p-5">
+    <div className="p-5 max-w-2xl mx-auto">
       <div className="flex items-center gap-2 mb-4 font-mono text-[10px] text-secondary">
         <span>✏️</span>
         <span>~/Writing</span>

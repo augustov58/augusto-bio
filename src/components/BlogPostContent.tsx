@@ -50,7 +50,7 @@ export default function BlogPostContent({ slug }: BlogPostContentProps) {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
+    <div className="p-6 max-w-2xl mx-auto">
       {/* Post header */}
       <div className="mb-6">
         <h1 className="font-heading text-xl font-bold text-primary mb-2">
