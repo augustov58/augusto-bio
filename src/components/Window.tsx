@@ -178,32 +178,40 @@ export default function Window({ window: win, children, toolbar }: WindowProps) 
   const openWindows = useWindowStore.getState().windows.filter(w => w.isOpen && !w.isMinimized);
   const isTopWindow = openWindows.length > 0 && openWindows.reduce((a, b) => (a.zIndex > b.zIndex ? a : b)).id === win.id;
 
-  // Resize handle component
+  // Resize handle component — uses generous hit areas fully inside the window
+  const EDGE_THICKNESS = 8; // px inset from each edge
+  const CORNER_SIZE = 16;   // px square at each corner
+
   const ResizeHandle = ({ edge }: { edge: ResizeEdge }) => {
     const isCorner = edge.length === 2;
-    const size = isCorner ? 12 : 6;
+    const style: React.CSSProperties = { position: 'absolute', zIndex: 50 };
 
-    const style: React.CSSProperties = { position: 'absolute' };
-
-    // Position the handle
-    if (edge.includes('n')) { style.top = -3; style.height = size; }
-    if (edge.includes('s')) { style.bottom = -3; style.height = size; }
-    if (edge.includes('e')) { style.right = -3; style.width = size; }
-    if (edge.includes('w')) { style.left = -3; style.width = size; }
-
-    // Edge handles span the full side
-    if (edge === 'n' || edge === 's') { style.left = 10; style.right = 10; }
-    if (edge === 'e' || edge === 'w') { style.top = 10; style.bottom = 10; }
-
-    // Corner handles
-    if (edge === 'nw') { style.top = -3; style.left = -3; }
-    if (edge === 'ne') { style.top = -3; style.right = -3; }
-    if (edge === 'sw') { style.bottom = -3; style.left = -3; }
-    if (edge === 'se') { style.bottom = -3; style.right = -3; }
+    if (isCorner) {
+      style.width = CORNER_SIZE;
+      style.height = CORNER_SIZE;
+      if (edge.includes('n')) style.top = 0;
+      if (edge.includes('s')) style.bottom = 0;
+      if (edge.includes('w')) style.left = 0;
+      if (edge.includes('e')) style.right = 0;
+    } else {
+      // Edge handles: full length minus corners
+      if (edge === 'n' || edge === 's') {
+        style.left = CORNER_SIZE;
+        style.right = CORNER_SIZE;
+        style.height = EDGE_THICKNESS;
+        if (edge === 'n') style.top = 0; else style.bottom = 0;
+      }
+      if (edge === 'e' || edge === 'w') {
+        style.top = CORNER_SIZE;
+        style.bottom = CORNER_SIZE;
+        style.width = EDGE_THICKNESS;
+        if (edge === 'w') style.left = 0; else style.right = 0;
+      }
+    }
 
     return (
       <div
-        className={`${edgeCursors[edge]} z-50`}
+        className={`${edgeCursors[edge]}`}
         style={style}
         onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startResize(edge, e.clientX, e.clientY); }}
         onTouchStart={(e) => { e.stopPropagation(); startResize(edge, e.touches[0].clientX, e.touches[0].clientY); }}
